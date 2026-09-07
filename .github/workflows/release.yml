@@ -2,6 +2,7 @@ name: Publish Windows desktop pet
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     paths:
       - '.github/workflows/release.yml'
 permissions:
@@ -28,10 +29,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.0.0 --repo "$env:GITHUB_REPOSITORY" 2>$null
+          gh release view v1.1.0 --repo "$env:GITHUB_REPOSITORY" 2>$null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload v1.0.0 release/Pocket-Pet-1.0.0.exe --clobber --repo "$env:GITHUB_REPOSITORY"
+            gh release upload v1.1.0 release/Pocket-Pet-1.1.0.exe --clobber --repo "$env:GITHUB_REPOSITORY"
           } else {
-            gh release create v1.0.0 release/Pocket-Pet-1.0.0.exe --target "$env:GITHUB_SHA" --title "Pocket Pet 1.0.0 · Windows 桌寵" --notes "下載 Pocket-Pet-1.0.0.exe 後雙擊即可使用，不需要安裝 Node.js 或 Codex。支援自訂 GIF、桌面散步、摸頭、隨機動作與錄音叫聲。" --repo "$env:GITHUB_REPOSITORY"
+            gh release create v1.1.0 release/Pocket-Pet-1.1.0.exe --target "$env:GITHUB_SHA" --title "Pocket Pet 1.1.0 · Windows 桌寵" --notes "下載 Pocket-Pet-1.1.0.exe 後雙擊即可使用，不需要安裝 Node.js 或 Codex。新增番茄鐘、專注／休息循環、桌寵倒數與系統通知；預設使用 HiPaint 走路動畫及第一幀靜態圖片。" --repo "$env:GITHUB_REPOSITORY"
           }
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

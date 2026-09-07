@@ -18,6 +18,7 @@ function updatePomodoro(){
 }
 protocol.registerSchemesAsPrivileged([{scheme:'pet-asset',privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}]);
 let pet,settings,tray,config,store,assetsDir,timer,paused=false,x=0,direction=1,mode='idle',until=0,last=0;
+if(process.platform==='win32')app.setAppUserModelId('com.classtest.pocketpet');
 const single=app.requestSingleInstanceLock();
 if(!single) app.quit();
 app.on('second-instance',()=>openSettings());
