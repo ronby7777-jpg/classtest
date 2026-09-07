@@ -1,6 +1,6 @@
 {
-  "name": "pocket-pet", "version": "1.0.0", "description": "可自訂 GIF 與錄音的桌面小夥伴", "main": "main.cjs", "author": "", "license": "MIT",
+  "name": "pocket-pet", "version": "1.1.0", "description": "可自訂 GIF 與錄音的桌面小夥伴", "main": "main.cjs", "author": "", "license": "MIT",
   "scripts": {"start": "electron .", "test": "node --test test/*.test.cjs", "build": "electron-builder --win portable --x64"},
   "devDependencies": {"electron": "^42.0.0", "electron-builder": "^26.0.12"},
-  "build": {"appId": "com.classtest.pocketpet", "productName": "Pocket Pet", "directories": {"output": "release"}, "files": ["main.cjs", "model.cjs", "preload.cjs", "ui/**/*", "package.json"], "win": {"target": "portable", "signAndEditExecutable": false}, "portable": {"artifactName": "Pocket-Pet-${version}.exe"}}
+  "build": {"appId": "com.classtest.pocketpet", "productName": "Pocket Pet", "directories": {"output": "release"}, "files": ["main.cjs", "model.cjs", "pomodoro.cjs", "preload.cjs", "ui/**/*", "package.json"], "win": {"target": "portable", "signAndEditExecutable": false}, "portable": {"artifactName": "Pocket-Pet-${version}.exe"}}
 }

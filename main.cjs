@@ -1,11 +1,24 @@
-const {app,BrowserWindow,ipcMain,dialog,screen,Menu,Tray,nativeImage,session,protocol,net} = require('electron');
+const {app,BrowserWindow,ipcMain,dialog,screen,Menu,Tray,nativeImage,session,protocol,net,Notification} = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const {pathToFileURL} = require('node:url');
 const {randomUUID} = require('node:crypto');
 const {normalize,bounds} = require('./model.cjs');
+const {Pomodoro} = require('./pomodoro.cjs');
+let pomodoro,pomodoroStore,pomodoroTimer;
+function savePomodoro(){fs.writeFileSync(pomodoroStore+'.tmp',JSON.stringify(pomodoro.snapshot()));fs.renameSync(pomodoroStore+'.tmp',pomodoroStore);}
+function updatePomodoro(){
+  if(pomodoro.tick()){
+    savePomodoro();
+    if(Notification.isSupported()){const note=new Notification({title:'Pocket Pet · 番茄鐘',body:pomodoro.notice});note.on('click',openSettings);note.show();}
+  }
+  const state=pomodoro.snapshot();send('pomodoro',state);
+  const seconds=Math.ceil(state.remainingMs/1000);
+  tray?.setToolTip('Pocket Pet · '+({focus:'專注',short:'短休息',long:'長休息'}[state.phase])+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0')+(state.running?'':'（已暫停）'));
+}
 protocol.registerSchemesAsPrivileged([{scheme:'pet-asset',privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}]);
 let pet,settings,tray,config,store,assetsDir,timer,paused=false,x=0,direction=1,mode='idle',until=0,last=0;
+if(process.platform==='win32')app.setAppUserModelId('com.classtest.pocketpet');
 const single=app.requestSingleInstanceLock();
 if(!single) app.quit();
 app.on('second-instance',()=>openSettings());
@@ -26,6 +39,8 @@ function trusted(event){return [pet,settings].some(w=>w&&!w.isDestroyed()&&w.web
 const handle=(name,fn)=>ipcMain.handle(name,async(e,...args)=>{if(!trusted(e))throw Error('Unauthorized');return fn(...args);});
 function safeFile(value){if(typeof value!=='string')return null;const name=value.startsWith('pet-asset://local/')?decodeURIComponent(value.slice(18)):path.basename(value);const full=path.join(assetsDir,path.basename(name));return fs.existsSync(full)?full:null;}
 app.whenReady().then(()=>{
+  pomodoroStore=path.join(app.getPath('userData'),'pomodoro.json');
+  try{pomodoro=new Pomodoro(JSON.parse(fs.readFileSync(pomodoroStore,'utf8')));}catch{pomodoro=new Pomodoro();}
   store=path.join(app.getPath('userData'),'settings.json');assetsDir=path.join(app.getPath('userData'),'assets');fs.mkdirSync(assetsDir,{recursive:true});
   try{config=normalize(JSON.parse(fs.readFileSync(store,'utf8')));}catch{config=normalize();}
   protocol.handle('pet-asset',request=>{const u=new URL(request.url);const name=decodeURIComponent(u.pathname.slice(1));if(u.hostname!=='local'||name!==path.basename(name))return new Response('Forbidden',{status:403});return net.fetch(pathToFileURL(path.join(assetsDir,name)).href);});
@@ -40,6 +55,9 @@ app.whenReady().then(()=>{
   tray=new Tray(icon);tray.setToolTip('Pocket Pet · 你的桌面小夥伴');
   const toggle=()=>{paused=!paused;action('idle',2000);send('state',snapshot());return paused;};
   tray.setContextMenu(Menu.buildFromTemplate([{label:'開啟桌寵工作室',click:openSettings},{label:'暫停／繼續散步',click:toggle},{type:'separator'},{label:'結束桌寵',click:()=>app.quit()}]));tray.on('double-click',openSettings);
+  handle('pomodoro:get',()=>{updatePomodoro();return pomodoro.snapshot();});
+  handle('pomodoro:command',(action,value)=>{updatePomodoro();const state=pomodoro.command(action,value);savePomodoro();send('pomodoro',state);return state;});
+  pomodoroTimer=setInterval(updatePomodoro,250);
   handle('get',()=>snapshot());handle('pause',toggle);
   handle('save',raw=>{const next=normalize(raw);next.assets=Object.fromEntries(Object.entries(next.assets).map(([k,v])=>[k,safeFile(v)]));next.random=next.random.map(r=>({...r,file:safeFile(r.file)}));config=next;persist();place();return snapshot();});
   handle('pick',async(kind,id)=>{if(!['idle','walk','pat','random','sound'].includes(kind))throw Error('不支援的素材欄位');const sound=kind==='sound';const result=await dialog.showOpenDialog(settings,{title:sound?'選擇叫聲':'選擇桌寵圖片或 GIF',filters:[{name:sound?'音訊':'圖片與動畫',extensions:sound?['webm','mp3','wav','ogg','m4a','flac']:['gif','png','apng','jpg','jpeg','webp','avif','bmp','svg','ico']}],properties:['openFile']});if(result.canceled)return null;
@@ -50,4 +68,4 @@ app.whenReady().then(()=>{
   screen.on('display-metrics-changed',()=>{place();send('state',snapshot());});screen.on('display-removed',()=>{place();send('state',snapshot());});screen.on('display-added',()=>send('state',snapshot()));
   last=Date.now();timer=setInterval(tick,33);openSettings();
 });
-app.on('window-all-closed',()=>{});app.on('before-quit',()=>clearInterval(timer));
+app.on('window-all-closed',()=>{});app.on('before-quit',()=>{clearInterval(timer);clearInterval(pomodoroTimer);if(pomodoro&&pomodoroStore)savePomodoro();});
