@@ -2,6 +2,16 @@
 
 Windows 透明置頂桌寵，預設小貓會在螢幕工作區最下方散步。設定與素材保存在本機，不需要帳號或伺服器。
 
+## 下載 Windows 桌寵
+
+**[⬇ 下載 Pocket-Pet-1.0.0.exe](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.0.0.exe)** · [所有版本](https://github.com/ronby7777-jpg/classtest/releases)
+
+1. 點上方連結下載 EXE，儲存到桌面或你喜歡的資料夾。
+2. 在 Windows 檔案總管雙擊 EXE，即可開啟桌寵。
+3. 之後每次雙擊同一個 EXE 就能使用，**不需要 Codex、Node.js，也不必重新下載**。可在 EXE 上按右鍵建立捷徑。
+
+GitHub 的「Code → Download ZIP」是開發用原始碼；一般使用者請下載上面的 EXE。
+
 ## 直接使用
 
 開啟 `Pocket-Pet-1.0.0.exe`。關閉設定視窗後桌寵仍會繼續陪伴；右鍵桌寵或雙擊系統匣圖示可重新開啟設定。從設定底部或系統匣選單選擇「結束桌寵」才會退出。
@@ -41,3 +51,4 @@ pnpm build
 目前為 Windows 版。麥克風實際收音品質與多螢幕實機配置需在目標電腦確認。
 
 若 NSIS 打包遇到路徑過長，請將專案放在較短的目錄再安裝依賴，例如 C:\dev\pet。
+
