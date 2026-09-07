@@ -4,3 +4,6 @@ sprite.onerror=()=>{sprite.src='cat.svg';};
 window.petAPI.onState(s=>{state=s;render();});window.petAPI.get().then(s=>{state=s;render();});
 let voice;window.petAPI.onAction(a=>{current=a;render();if(a.sound&&state?.assets.sound){voice?.pause();voice=new Audio(state.assets.sound);voice.volume=state.volume/100;voice.play().catch(()=>{});}});
 button.onclick=()=>window.petAPI.pat();button.oncontextmenu=e=>{e.preventDefault();window.petAPI.settings();};
+
+function renderPomodoro(s){const badge=document.querySelector('#pomo-badge');const seconds=Math.ceil(s.remainingMs/1000);badge.hidden=!s.running&&!s.notice;badge.textContent=s.notice?'時間到！':({focus:'專注',short:'休息',long:'長休息'}[s.phase])+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');button.title=s.notice||'右鍵開啟工作室與番茄鐘';}
+window.petAPI.onPomodoro(renderPomodoro);window.petAPI.pomodoroGet().then(renderPomodoro).catch(()=>{});
