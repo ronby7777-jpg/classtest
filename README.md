@@ -4,7 +4,7 @@ Windows 透明置頂桌寵，預設角色會在螢幕工作區最下方散步。
 
 ## 下載 Windows 桌寵
 
-**[⬇ 下載 Pocket-Pet-1.1.0.exe](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.1.0.exe)** · [所有版本](https://github.com/ronby7777-jpg/classtest/releases)
+**[⬇ 下載 Pocket-Pet-1.2.0.exe](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.2.0.exe)** · [所有版本](https://github.com/ronby7777-jpg/classtest/releases)
 
 1. 點上方連結下載 EXE，儲存到桌面或你喜歡的資料夾。
 2. 在 Windows 檔案總管雙擊 EXE，即可開啟桌寵。
@@ -14,7 +14,7 @@ GitHub 的「Code → Download ZIP」是開發用原始碼；一般使用者請�
 
 ## 直接使用
 
-開啟 `Pocket-Pet-1.1.0.exe`。關閉設定視窗後桌寵仍會繼續陪伴；右鍵桌寵或雙擊系統匣圖示可重新開啟設定。從設定底部或系統匣選單選擇「結束桌寵」才會退出。
+開啟 `Pocket-Pet-1.2.0.exe`。關閉設定視窗後桌寵仍會繼續陪伴；右鍵桌寵或雙擊系統匣圖示可重新開啟設定。從設定底部或系統匣選單選擇「結束桌寵」才會退出。
 
 - 單擊桌寵：播放摸頭動作約 2.2 秒。
 - 常態、走路、摸頭：可分別上傳圖片或 GIF。未設定走路素材時，使用自訂常態圖片或內建走路 GIF；停下與摸頭時使用自訂常態圖片或內建 GIF 的第一幀。
@@ -65,3 +65,11 @@ pnpm build
 ## 1.1.0 更新
 
 新增番茄鐘與桌寵提醒，預設走路使用提供的 HiPaint GIF，停下時顯示第一幀靜態圖片。既有自訂素材仍會優先使用；可在角色與動作中按「還原預設」。
+
+
+## 1.2.0：透明角色、拖曳與置頂
+
+- 預設六幀走路 GIF 已逐幀去背；人物白色頭髮、耳朵、衣服及尾巴保留，停下時使用去背後第一幀。
+- 按住桌寵拖曳到想要的位置，放開後暫停散步並記住位置；按「繼續散步」可在新的高度散步。
+- 散步設定新增「保持置頂」、「暫時隱藏桌寵」及「回到螢幕底部」。隱藏後可從系統匣選單找回。
+- 關閉置頂時，桌寵可以被一般應用視窗遮住。

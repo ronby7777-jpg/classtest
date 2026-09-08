@@ -1,3 +1,5 @@
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent}#pet{display:block;border:0;padding:8px;background:transparent;width:100%;height:100%;cursor:pointer;position:relative}#sprite{width:100%;height:100%;object-fit:contain;transform:scaleX(var(--direction,1));user-select:none}#pet.walk #sprite{animation:bob .3s infinite alternate ease-in-out}#pet.pat #sprite{animation:squish .45s infinite alternate}#hearts{display:none;position:absolute;top:0;left:48%;color:#ff648a;font:24px sans-serif;text-shadow:0 2px white}#pet.pat #hearts{display:block;animation:heart .8s infinite} @keyframes bob{to{translate:0 -5px;rotate:3deg}}@keyframes breathe{50%{scale:1 .97}}@keyframes squish{to{scale:1.06 .9}}@keyframes heart{to{translate:0 -12px;opacity:0}}
 
 #pomo-badge{position:absolute;bottom:1px;left:0;right:0;padding:3px 1px;border-radius:6px;background:#354e3c;color:#fff;font:11px "Microsoft JhengHei",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+#pet{touch-action:none;user-select:none}#pet:active{cursor:grabbing}
