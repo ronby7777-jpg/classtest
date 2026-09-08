@@ -4,7 +4,7 @@ function report(error){toast(error.message||String(error));$('#save-status').tex
 function enqueue(fn){saveQueue=saveQueue.then(fn).catch(report);return saveQueue;}
 function save(){const data=structuredClone(state);$('#save-status').textContent='儲存中…';return enqueue(async()=>{await window.petAPI.save(data);$('#save-status').textContent='✓ 已儲存到這台電腦';});}
 const units={size:'px',speed:'px/s',rangeStart:'%',rangeEnd:'%',volume:'%',soundChance:'%'};
-function renderControls(){for(const [key,unit]of Object.entries(units)){$('#'+key).value=state[key];$('#'+key+'-value').textContent=state[key]+' '+unit;}$('#pause').textContent=state.paused?'▷ 繼續散步':'Ⅱ 暫停散步';$('#preview').src=state.assets.idle||'default-idle.png';$('#play').disabled=!state.assets.sound;$('#clear-sound').disabled=!state.assets.sound;$('#record-status').textContent=state.assets.sound?'已儲存一段專屬叫聲':'最長 30 秒，錄完自動儲存';
+function renderControls(){renderWindowControls();for(const [key,unit]of Object.entries(units)){$('#'+key).value=state[key];$('#'+key+'-value').textContent=state[key]+' '+unit;}$('#pause').textContent=state.paused?'▷ 繼續散步':'Ⅱ 暫停散步';$('#preview').src=state.assets.idle||'default-idle.png';$('#play').disabled=!state.assets.sound;$('#clear-sound').disabled=!state.assets.sound;$('#record-status').textContent=state.assets.sound?'已儲存一段專屬叫聲':'最長 30 秒，錄完自動儲存';
   $('#display').replaceChildren(...state.displays.map(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=`${d.name} · ${d.width} × ${d.height}`;return o;}));if(state.displayId)$('#display').value=state.displayId;
 }
 function img(file){const i=document.createElement('img');i.src=file||'default-idle.png';i.alt='動作預覽';i.onerror=()=>{i.onerror=null;i.src='default-idle.png';toast('圖片無法顯示，請改用 GIF、PNG 或 WebP。');};return i;}
@@ -29,3 +29,9 @@ window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.sto
 $('#quit').onclick=()=>window.petAPI.quit();
 window.petAPI.onState(s=>{if(state){state.paused=s.paused;$('#pause').textContent=s.paused?'▷ 繼續散步':'Ⅱ 暫停散步';}});
 window.petAPI.get().then(s=>{state=s;render();}).catch(report);
+
+function renderWindowControls(){if(!state)return;$('#always-on-top').checked=state.alwaysOnTop;$('#pet-visibility').textContent=state.petHidden?'顯示桌寵':'暫時隱藏桌寵';}
+$('#always-on-top').onchange=async e=>{try{state=await window.petAPI.topmost(e.target.checked);renderWindowControls();}catch(error){report(error);renderWindowControls();}};
+$('#pet-visibility').onclick=async()=>{try{state=await window.petAPI.visibility();renderWindowControls();}catch(error){report(error);}};
+$('#return-floor').onclick=async()=>{try{state=await window.petAPI.returnFloor();renderControls();toast('已回到螢幕底部');}catch(error){report(error);}};
+window.petAPI.onState(s=>{if(state){state.alwaysOnTop=s.alwaysOnTop;state.petHidden=s.petHidden;state.placement=s.placement;state.displayId=s.displayId;renderWindowControls();}});
