@@ -9,7 +9,7 @@ async function releasePointer(e,pat){if(e.pointerId!==pointer)return;pointer=nul
 button.onpointerup=e=>{releasePointer(e,true).catch(()=>{});};
 button.onpointercancel=e=>{releasePointer(e,false).catch(()=>{});};
 button.onlostpointercapture=e=>{releasePointer(e,false).catch(()=>{});};
-button.onclick=e=>{if(e.detail===0)window.petAPI.pat();};button.oncontextmenu=e=>{e.preventDefault();window.petAPI.settings();};
+button.onclick=e=>{if(e.detail===0)window.petAPI.pat();};button.oncontextmenu=e=>{e.preventDefault();window.petAPI.menu();};
 
-function renderPomodoro(s){const badge=document.querySelector('#pomo-badge');const seconds=Math.ceil(s.remainingMs/1000);badge.hidden=!s.running&&!s.notice;badge.textContent=s.notice?'時間到！':({focus:'專注',short:'休息',long:'長休息'}[s.phase])+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');button.title=s.notice||'右鍵開啟工作室與番茄鐘';}
+function renderPomodoro(s){const badge=document.querySelector('#pomo-badge');const seconds=Math.ceil(s.remainingMs/1000);badge.hidden=!s.running&&!s.notice;badge.textContent=s.notice?'時間到！':({focus:'專注',short:'休息',long:'長休息'}[s.phase])+' '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');button.title=s.notice||'右鍵：繼續／暫停散步、開啟工作室';}
 window.petAPI.onPomodoro(renderPomodoro);window.petAPI.pomodoroGet().then(renderPomodoro).catch(()=>{});

@@ -4,17 +4,20 @@ Windows 透明置頂桌寵，預設角色會在螢幕工作區最下方散步。
 
 ## 下載 Windows 桌寵
 
-**[⬇ 下載 Pocket-Pet-1.2.0.exe](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.2.0.exe)** · [所有版本](https://github.com/ronby7777-jpg/classtest/releases)
+**[⬇ 下載 Pocket-Pet-1.2.1-x64.zip（建議，解壓縮一次後快速啟動）](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.2.1-x64.zip)**
 
-1. 點上方連結下載 EXE，儲存到桌面或你喜歡的資料夾。
-2. 在 Windows 檔案總管雙擊 EXE，即可開啟桌寵。
-3. 之後每次雙擊同一個 EXE 就能使用，**不需要 Codex、Node.js，也不必重新下載**。可在 EXE 上按右鍵建立捷徑。
+[單檔便攜 EXE](https://github.com/ronby7777-jpg/classtest/releases/latest/download/Pocket-Pet-1.2.1.exe) · [所有版本](https://github.com/ronby7777-jpg/classtest/releases)
 
-GitHub 的「Code → Download ZIP」是開發用原始碼；一般使用者請下載上面的 EXE。
+1. 下載上方 ZIP，按右鍵「全部解壓縮」到固定資料夾。
+2. 雙擊解壓縮後的 `Pocket Pet.exe`。不要直接在 ZIP 裡執行，也不要單獨搬走 EXE；旁邊的 DLL 與 resources 都需要保留。
+3. 在 `Pocket Pet.exe` 上按右鍵 → 顯示其他選項 → 傳送到 → 桌面（建立捷徑），之後雙擊捷徑即可。
+
+單檔便攜 EXE 每次啟動都要先解壓縮，速度較慢。ZIP 版只需手動解壓縮一次，不需要 Codex、Node.js 或安裝程式。
+GitHub 的「Code → Download ZIP」是開發用原始碼；請使用上面的發行版下載連結。
 
 ## 直接使用
 
-開啟 `Pocket-Pet-1.2.0.exe`。關閉設定視窗後桌寵仍會繼續陪伴；右鍵桌寵或雙擊系統匣圖示可重新開啟設定。從設定底部或系統匣選單選擇「結束桌寵」才會退出。
+開啟 `Pocket Pet.exe`。關閉設定視窗後桌寵仍會繼續陪伴；右鍵桌寵選「開啟桌寵工作室」，或雙擊系統匣圖示可重新開啟設定。從設定底部或系統匣選單選擇「結束桌寵」才會退出。
 
 - 單擊桌寵：播放摸頭動作約 2.2 秒。
 - 常態、走路、摸頭：可分別上傳圖片或 GIF。未設定走路素材時，使用自訂常態圖片或內建走路 GIF；停下與摸頭時使用自訂常態圖片或內建 GIF 的第一幀。
@@ -73,3 +76,13 @@ pnpm build
 - 按住桌寵拖曳到想要的位置，放開後暫停散步並記住位置；按「繼續散步」可在新的高度散步。
 - 散步設定新增「保持置頂」、「暫時隱藏桌寵」及「回到螢幕底部」。隱藏後可從系統匣選單找回。
 - 關閉置頂時，桌寵可以被一般應用視窗遮住。
+
+
+## 1.2.1：繼續散步與快速啟動
+
+- 工作室固定側邊、頁首及散步設定都有「繼續散步／暫停散步」按鈕。
+- 右鍵桌寵直接選「繼續散步」，會立即在拖曳後的高度走動。
+- 記住的位置與暫停狀態分別儲存；按繼續後重開仍會散步。舊版只有位置資料時預設恢復散步。
+- 設定視窗載入完成後顯示；再次啟動會恢復已最小化的工作室。
+- 新增 ZIP 發行版，解壓縮一次後直接啟動，避免單檔 EXE 每次解壓縮的等待。
+- `ui/app-icon.ico` 是保留白色角色區域的透明圖示，原始 PNG 為 `ui/app-icon.png`。
