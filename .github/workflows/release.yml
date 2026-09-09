@@ -22,17 +22,17 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Test
         run: pnpm test
-      - name: Build portable EXE
-        run: pnpm exec electron-builder --win portable --x64 --publish never
+      - name: Build Windows packages
+        run: pnpm exec electron-builder --win portable zip --x64 --publish never
       - name: Publish download
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view v1.2.0 --repo "$env:GITHUB_REPOSITORY" 2>$null
+          gh release view v1.2.1 --repo "$env:GITHUB_REPOSITORY" 2>$null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload v1.2.0 release/Pocket-Pet-1.2.0.exe --clobber --repo "$env:GITHUB_REPOSITORY"
+            gh release upload v1.2.1 release/Pocket-Pet-1.2.1.exe release/Pocket-Pet-1.2.1-x64.zip --clobber --repo "$env:GITHUB_REPOSITORY"
           } else {
-            gh release create v1.2.0 release/Pocket-Pet-1.2.0.exe --target "$env:GITHUB_SHA" --title "Pocket Pet 1.2.0 · Windows 桌寵" --notes "下載 Pocket-Pet-1.2.0.exe 後雙擊即可使用，不需要安裝 Node.js 或 Codex。新增逐幀去背的透明角色、拖曳移位、保持置頂開關與暫時隱藏；包含番茄鐘與完成通知。" --repo "$env:GITHUB_REPOSITORY"
+            gh release create v1.2.1 release/Pocket-Pet-1.2.1.exe release/Pocket-Pet-1.2.1-x64.zip --target "$env:GITHUB_SHA" --title "Pocket Pet 1.2.1 · Windows 桌寵" --notes "建議下載 Pocket-Pet-1.2.1-x64.zip 並全部解壓縮，雙擊 Pocket Pet.exe 啟動；只需解壓縮一次。新增固定側邊與右鍵繼續散步控制、分別保存位置與散步狀態、修正設定視窗顯示與最小化恢復，並加入透明角色圖示。單檔 EXE 仍提供，但每次啟動需要解壓縮。" --repo "$env:GITHUB_REPOSITORY"
           }
           if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }

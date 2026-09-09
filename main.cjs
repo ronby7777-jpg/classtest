@@ -22,7 +22,7 @@ let pet,settings,tray,config,store,assetsDir,timer,paused=false,x=0,direction=1,
 if(process.platform==='win32')app.setAppUserModelId('com.classtest.pocketpet');
 const single=app.requestSingleInstanceLock();
 if(!single) app.quit();
-app.on('second-instance',()=>openSettings());
+app.on('second-instance',()=>app.whenReady().then(openSettings));
 const send=(channel,data)=>[pet,settings].forEach(w=>{if(w&&!w.isDestroyed())w.webContents.send(channel,data);});
 const assetURL = file => file ? 'pet-asset://local/'+encodeURIComponent(path.basename(file)) : null;
 function snapshot(){return {...config,assets:Object.fromEntries(Object.entries(config.assets).map(([k,v])=>[k,assetURL(v)])),random:config.random.map(r=>({...r,file:assetURL(r.file)})),paused,petHidden,displays:screen.getAllDisplays().map((d,i)=>({id:d.id,name:d.label||`螢幕 ${i+1}`,width:d.workArea.width,height:d.workArea.height}))};}
@@ -43,7 +43,7 @@ function moveDrag(){
 function finishDrag(){
   if(!dragging)return false;
   moveDrag();const moved=dragging.moved;dragging=null;
-  if(moved){paused=true;action('idle',2000);persist();}
+  if(moved){setPaused(true);}
   return moved;
 }
 function action(name,duration,file=null){mode=name;until=Date.now()+duration;send('action',{name,direction,file:assetURL(file),sound:(name==='pat'||name==='random')&&Math.random()*100<config.soundChance});}
@@ -52,16 +52,37 @@ function tick(){const now=Date.now(),dt=Math.min(.1,(now-last)/1000);last=now;if
   if(mode==='walk'){const b=area();x+=direction*config.speed*dt;if(x<=b.left||x>=b.right){direction*=-1;x=Math.max(b.left,Math.min(b.right,x));send('action',{name:'walk',direction});}place();}
 }
 function windowOptions(extra){return {...extra,webPreferences:{preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true}};}
-function openSettings(){if(settings&&!settings.isDestroyed()){settings.show();settings.focus();return;}settings=new BrowserWindow(windowOptions({width:1060,height:840,minWidth:780,minHeight:640,backgroundColor:'#f5f3ee',title:'Pocket Pet · 桌寵工作室',autoHideMenuBar:true}));settings.loadFile(path.join(__dirname,'ui/settings.html'));settings.on('closed',()=>settings=null);}
+function revealSettings(){if(!settings||settings.isDestroyed())return;if(settings.isMinimized())settings.restore();settings.show();settings.focus();}
+function openSettings(){
+  if(settings&&!settings.isDestroyed()){revealSettings();return;}
+  settings=new BrowserWindow(windowOptions({width:1060,height:840,minWidth:780,minHeight:640,show:false,icon:path.join(__dirname,'ui/app-icon.png'),backgroundColor:'#f5f3ee',title:'Pocket Pet · 桌寵工作室',autoHideMenuBar:true}));
+  settings.once('ready-to-show',revealSettings);
+  settings.loadFile(path.join(__dirname,'ui/settings.html')).then(revealSettings);
+  settings.on('closed',()=>settings=null);
+}
+function setPaused(value){
+  paused=value;config.paused=value;
+  action(paused?'idle':'walk',paused?2000:5000);
+  persist();refreshTray();return paused;
+}
+function petMenu(){return Menu.buildFromTemplate([
+  {label:paused?'繼續散步':'暫停散步',click:()=>setPaused(!paused)},
+  {label:'開啟桌寵工作室',click:openSettings},
+  {label:petHidden?'顯示桌寵':'隱藏桌寵',click:()=>{petHidden=!petHidden;if(petHidden)pet.hide();else pet.showInactive();send('state',snapshot());refreshTray();}},
+  {label:'保持置頂',type:'checkbox',checked:config.alwaysOnTop,click:()=>{config.alwaysOnTop=!config.alwaysOnTop;pet.setAlwaysOnTop(config.alwaysOnTop,'screen-saver');persist();refreshTray();}},
+  {type:'separator'},{label:'結束桌寵',click:()=>app.quit()}
+]);}
+function refreshTray(){if(tray)tray.setContextMenu(petMenu());}
 function trusted(event){return [pet,settings].some(w=>w&&!w.isDestroyed()&&w.webContents===event.sender);}
 const handle=(name,fn)=>ipcMain.handle(name,async(e,...args)=>{if(!trusted(e))throw Error('Unauthorized');return fn(...args);});
 function safeFile(value){if(typeof value!=='string')return null;const name=value.startsWith('pet-asset://local/')?decodeURIComponent(value.slice(18)):path.basename(value);const full=path.join(assetsDir,path.basename(name));return fs.existsSync(full)?full:null;}
 app.whenReady().then(()=>{
+  if(!single)return;
   pomodoroStore=path.join(app.getPath('userData'),'pomodoro.json');
   try{pomodoro=new Pomodoro(JSON.parse(fs.readFileSync(pomodoroStore,'utf8')));}catch{pomodoro=new Pomodoro();}
   store=path.join(app.getPath('userData'),'settings.json');assetsDir=path.join(app.getPath('userData'),'assets');fs.mkdirSync(assetsDir,{recursive:true});
   try{config=normalize(JSON.parse(fs.readFileSync(store,'utf8')));}catch{config=normalize();}
-  paused=!!config.placement;
+  paused=config.paused;
   protocol.handle('pet-asset',request=>{const u=new URL(request.url);const name=decodeURIComponent(u.pathname.slice(1));if(u.hostname!=='local'||name!==path.basename(name))return new Response('Forbidden',{status:403});return net.fetch(pathToFileURL(path.join(assetsDir,name)).href);});
   session.defaultSession.setPermissionRequestHandler((contents,permission,callback)=>callback(contents===settings?.webContents&&permission==='media'));
   session.defaultSession.setPermissionCheckHandler((contents,permission)=>contents===settings?.webContents&&permission==='media');
@@ -72,8 +93,8 @@ app.whenReady().then(()=>{
   pet.on('closed',()=>{pet=null;app.quit();});
   const icon=nativeImage.createFromPath(path.join(__dirname,'ui/tray.png'));
   tray=new Tray(icon);tray.setToolTip('Pocket Pet · 你的桌面小夥伴');
-  const toggle=()=>{paused=!paused;action('idle',2000);send('state',snapshot());return paused;};
-  tray.setContextMenu(Menu.buildFromTemplate([{label:'開啟桌寵工作室',click:openSettings},{label:'暫停／繼續散步',click:toggle},{label:'顯示／隱藏桌寵',click:()=>{petHidden=!petHidden;if(petHidden)pet.hide();else pet.showInactive();send('state',snapshot());}},{label:'切換保持置頂',click:()=>{config.alwaysOnTop=!config.alwaysOnTop;pet.setAlwaysOnTop(config.alwaysOnTop,'screen-saver');persist();}},{type:'separator'},{label:'結束桌寵',click:()=>app.quit()}]));tray.on('double-click',openSettings);
+  const toggle=()=>setPaused(!paused);
+  refreshTray();tray.on('double-click',openSettings);
   handle('pomodoro:get',()=>{updatePomodoro();return pomodoro.snapshot();});
   handle('pomodoro:command',(action,value)=>{updatePomodoro();const state=pomodoro.command(action,value);savePomodoro();send('pomodoro',state);return state;});
   pomodoroTimer=setInterval(updatePomodoro,250);
@@ -81,13 +102,14 @@ app.whenReady().then(()=>{
   handle('drag-start',point=>{if(dragging)return;if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y))throw Error('Invalid drag point');dragging={cursor:{x:point.x,y:point.y},origin:pet.getBounds(),moved:false};});
   handle('drag-end',()=>finishDrag());
   handle('return-floor',()=>{finishDrag();config.placement=null;persist();place(true);return snapshot();});
-  handle('topmost',value=>{if(typeof value!=='boolean')throw Error('Invalid topmost value');config.alwaysOnTop=value;pet.setAlwaysOnTop(value,'screen-saver');persist();return snapshot();});
-  handle('visibility',()=>{petHidden=!petHidden;if(petHidden)pet.hide();else pet.showInactive();send('state',snapshot());return snapshot();});
-  handle('save',raw=>{const next=normalize(raw);next.assets=Object.fromEntries(Object.entries(next.assets).map(([k,v])=>[k,safeFile(v)]));next.random=next.random.map(r=>({...r,file:safeFile(r.file)}));next.placement=config.placement;next.alwaysOnTop=config.alwaysOnTop;config=next;persist();place();return snapshot();});
+  handle('topmost',value=>{if(typeof value!=='boolean')throw Error('Invalid topmost value');config.alwaysOnTop=value;pet.setAlwaysOnTop(value,'screen-saver');persist();refreshTray();return snapshot();});
+  handle('visibility',()=>{petHidden=!petHidden;if(petHidden)pet.hide();else pet.showInactive();send('state',snapshot());refreshTray();return snapshot();});
+  handle('save',raw=>{const next=normalize(raw);next.assets=Object.fromEntries(Object.entries(next.assets).map(([k,v])=>[k,safeFile(v)]));next.random=next.random.map(r=>({...r,file:safeFile(r.file)}));next.placement=config.placement;next.paused=paused;next.alwaysOnTop=config.alwaysOnTop;config=next;persist();place();return snapshot();});
   handle('pick',async(kind,id)=>{if(!['idle','walk','pat','random','sound'].includes(kind))throw Error('不支援的素材欄位');const sound=kind==='sound';const result=await dialog.showOpenDialog(settings,{title:sound?'選擇叫聲':'選擇桌寵圖片或 GIF',filters:[{name:sound?'音訊':'圖片與動畫',extensions:sound?['webm','mp3','wav','ogg','m4a','flac']:['gif','png','apng','jpg','jpeg','webp','avif','bmp','svg','ico']}],properties:['openFile']});if(result.canceled)return null;
     const file=result.filePaths[0];if(fs.statSync(file).size>50*1024*1024)throw Error('素材請小於 50 MB');const dest=path.join(assetsDir,randomUUID()+path.extname(file).toLowerCase());fs.copyFileSync(file,dest);
     if(kind==='random'){const r=config.random.find(r=>r.id===id);if(r)r.file=dest;}else config.assets[kind]=dest;persist();return snapshot();});
   handle('record',bytes=>{if(!(bytes instanceof Uint8Array)||bytes.length>15*1024*1024)throw Error('錄音太大');const file=path.join(assetsDir,randomUUID()+'.webm');fs.writeFileSync(file,bytes);config.assets.sound=file;persist();return snapshot();});
+  ipcMain.on('pet-menu',e=>{if(trusted(e))petMenu().popup({window:pet});});
   ipcMain.on('pat',e=>{if(trusted(e))action('pat',2200);});ipcMain.on('settings',e=>{if(trusted(e))openSettings();});ipcMain.on('quit',e=>{if(trusted(e))app.quit();});
   screen.on('display-metrics-changed',()=>{place();send('state',snapshot());});screen.on('display-removed',()=>{place();send('state',snapshot());});screen.on('display-added',()=>send('state',snapshot()));
   last=Date.now();timer=setInterval(tick,33);openSettings();

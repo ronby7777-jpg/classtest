@@ -7,3 +7,5 @@ test('arbitrary nested input is normalized',()=>{assert.deepEqual(normalize({ass
 
 test('topmost defaults on and explicit false survives normalization',()=>{assert.equal(normalize().alwaysOnTop,true);assert.equal(normalize({alwaysOnTop:false}).alwaysOnTop,false);});
 test('free placement is validated and clamped to the available display',()=>{const c=normalize({placement:{x:-1800,y:-900},size:150});assert.deepEqual(c.placement,{x:-1800,y:-900});assert.equal(bounds(c,{x:-1920,y:-200,width:1920,height:1040}).y,-200);assert.equal(normalize({placement:{x:Infinity,y:2}}).placement,null);});
+
+test('walking state is independent of remembered placement',()=>{assert.equal(normalize({placement:{x:20,y:40}}).paused,false);assert.equal(normalize({placement:{x:20,y:40},paused:false}).paused,false);assert.equal(normalize({placement:{x:20,y:40},paused:true}).paused,true);assert.equal(normalize({paused:'true'}).paused,false);});

@@ -3,3 +3,5 @@
 .pomodoro-panel{margin:0 0 24px;background:#eef2e6}.pomo-clock{text-align:center}#pomo-time{font-size:60px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--green);letter-spacing:3px}#pomo-notice{min-height:24px;color:#52644f}.pomo-durations{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0}.pomo-durations label{font-size:12px}.pomo-durations input{display:block;width:100%;margin-top:6px}#pomo-fields{border:0;padding:0;margin:20px 0 0;min-width:0}#pomo-fields legend{font-size:12px;color:#52644f}
 
 .window-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:14px}.window-controls label{font-size:13px}.window-controls input{accent-color:var(--green)}
+
+.aside-bottom [data-walk-toggle]{display:block;width:100%;margin-bottom:8px}.aside-bottom #walk-status{font-size:11px;color:#52644f;margin:0 0 12px}

@@ -4,7 +4,7 @@ function report(error){toast(error.message||String(error));$('#save-status').tex
 function enqueue(fn){saveQueue=saveQueue.then(fn).catch(report);return saveQueue;}
 function save(){const data=structuredClone(state);$('#save-status').textContent='儲存中…';return enqueue(async()=>{await window.petAPI.save(data);$('#save-status').textContent='✓ 已儲存到這台電腦';});}
 const units={size:'px',speed:'px/s',rangeStart:'%',rangeEnd:'%',volume:'%',soundChance:'%'};
-function renderControls(){renderWindowControls();for(const [key,unit]of Object.entries(units)){$('#'+key).value=state[key];$('#'+key+'-value').textContent=state[key]+' '+unit;}$('#pause').textContent=state.paused?'▷ 繼續散步':'Ⅱ 暫停散步';$('#preview').src=state.assets.idle||'default-idle.png';$('#play').disabled=!state.assets.sound;$('#clear-sound').disabled=!state.assets.sound;$('#record-status').textContent=state.assets.sound?'已儲存一段專屬叫聲':'最長 30 秒，錄完自動儲存';
+function renderControls(){renderWindowControls();for(const [key,unit]of Object.entries(units)){$('#'+key).value=state[key];$('#'+key+'-value').textContent=state[key]+' '+unit;}renderWalking();$('#preview').src=state.assets.idle||'default-idle.png';$('#play').disabled=!state.assets.sound;$('#clear-sound').disabled=!state.assets.sound;$('#record-status').textContent=state.assets.sound?'已儲存一段專屬叫聲':'最長 30 秒，錄完自動儲存';
   $('#display').replaceChildren(...state.displays.map(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=`${d.name} · ${d.width} × ${d.height}`;return o;}));if(state.displayId)$('#display').value=state.displayId;
 }
 function img(file){const i=document.createElement('img');i.src=file||'default-idle.png';i.alt='動作預覽';i.onerror=()=>{i.onerror=null;i.src='default-idle.png';toast('圖片無法顯示，請改用 GIF、PNG 或 WebP。');};return i;}
@@ -18,7 +18,7 @@ function render(){renderControls();renderActions();}
 for(const key of Object.keys(units)){$('#'+key).oninput=e=>{state[key]=Number(e.target.value);if(key==='rangeStart'&&state.rangeEnd<state.rangeStart+5)state.rangeEnd=state.rangeStart+5;if(key==='rangeEnd'&&state.rangeStart>state.rangeEnd-5)state.rangeStart=state.rangeEnd-5;for(const k of Object.keys(units)){$('#'+k).value=state[k];$('#'+k+'-value').textContent=state[k]+' '+units[k];}};$('#'+key).onchange=save;}
 $('#display').onchange=e=>{state.displayId=Number(e.target.value);save();};
 $('#add').onclick=()=>{state.random.push({id:crypto.randomUUID(),name:`小動作 ${state.random.length+1}`,file:null,duration:3});save();renderActions();};
-$('#pause').onclick=async()=>{state.paused=await window.petAPI.pause();$('#pause').textContent=state.paused?'▷ 繼續散步':'Ⅱ 暫停散步';};
+document.querySelectorAll('[data-walk-toggle]').forEach(button=>{button.onclick=async()=>{try{state.paused=await window.petAPI.pause();renderWalking();}catch(error){report(error);}};});
 $('#preview').onclick=()=>{window.petAPI.pat();const p=$('#preview');p.src=state.assets.pat||state.assets.idle||'default-idle.png';p.classList.remove('pat');void p.offsetWidth;p.classList.add('pat');clearTimeout(render.timer);render.timer=setTimeout(()=>{p.classList.remove('pat');p.src=state.assets.idle||'default-idle.png';},2200);};
 $('#upload-sound').onclick=()=>pick('sound').catch(report);
 $('#play').onclick=()=>{const a=$('#audio');a.src=state.assets.sound;a.volume=state.volume/100;a.hidden=false;a.play().catch(()=>toast('無法播放這段音訊，請嘗試 WAV、MP3 或重新錄音。'));};
@@ -27,7 +27,7 @@ function cleanupRecording(){clearTimeout(recordTimer);clearInterval(countTimer);
 $('#record').onclick=async()=>{if(recording){recorder.stop();return;}if(starting)return;starting=true;$('#record').disabled=true;try{stream=await navigator.mediaDevices.getUserMedia({audio:true});const type=['audio/webm;codecs=opus','audio/webm'].find(t=>MediaRecorder.isTypeSupported(t));if(!type)throw Error('這台電腦不支援 WebM 錄音');recorder=new MediaRecorder(stream,{mimeType:type});const chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};recorder.onstop=async()=>{cleanupRecording();try{const bytes=new Uint8Array(await new Blob(chunks,{type}).arrayBuffer());await saveQueue;state=await window.petAPI.record(bytes);renderControls();toast('叫聲錄好了！按「試聽」聽聽看。');}catch(e){report(e);}};recorder.onerror=()=>{cleanupRecording();toast('錄音失敗，請檢查麥克風後再試。');};recorder.start();recording=true;starting=false;$('#record').disabled=false;$('#upload-sound').disabled=true;$('#record').textContent='■ 停止並儲存';const start=Date.now();$('#record-status').textContent='錄音中 0 / 30 秒';countTimer=setInterval(()=>$('#record-status').textContent=`錄音中 ${Math.floor((Date.now()-start)/1000)} / 30 秒`,250);recordTimer=setTimeout(()=>{if(recorder.state==='recording')recorder.stop();},30000);}catch(e){cleanupRecording();toast('無法錄音：請在 Windows 隱私設定允許麥克風，並確認裝置已連接。');}};
 window.addEventListener('beforeunload',()=>{stream?.getTracks().forEach(t=>t.stop());});
 $('#quit').onclick=()=>window.petAPI.quit();
-window.petAPI.onState(s=>{if(state){state.paused=s.paused;$('#pause').textContent=s.paused?'▷ 繼續散步':'Ⅱ 暫停散步';}});
+window.petAPI.onState(s=>{if(state){state.paused=s.paused;renderWalking();}});
 window.petAPI.get().then(s=>{state=s;render();}).catch(report);
 
 function renderWindowControls(){if(!state)return;$('#always-on-top').checked=state.alwaysOnTop;$('#pet-visibility').textContent=state.petHidden?'顯示桌寵':'暫時隱藏桌寵';}
@@ -35,3 +35,5 @@ $('#always-on-top').onchange=async e=>{try{state=await window.petAPI.topmost(e.t
 $('#pet-visibility').onclick=async()=>{try{state=await window.petAPI.visibility();renderWindowControls();}catch(error){report(error);}};
 $('#return-floor').onclick=async()=>{try{state=await window.petAPI.returnFloor();renderControls();toast('已回到螢幕底部');}catch(error){report(error);}};
 window.petAPI.onState(s=>{if(state){state.alwaysOnTop=s.alwaysOnTop;state.petHidden=s.petHidden;state.placement=s.placement;state.displayId=s.displayId;renderWindowControls();}});
+
+function renderWalking(){if(!state)return;document.querySelectorAll("[data-walk-toggle]").forEach(button=>button.textContent=state.paused?"▷ 繼續散步":"Ⅱ 暫停散步");$("#walk-status").textContent=state.paused?"散步已暫停，按上方按鈕繼續":"正在散步";}
